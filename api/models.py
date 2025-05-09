@@ -2,7 +2,7 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.utils import timezone
 import datetime
-from .helpers import default_auction_end_time
+from .helpers import default_auction_end_time, default_auction_start_time
 
 class CustomUserManager(BaseUserManager):
     def create_user(self, email, username, password=None, **extra_fields):
@@ -44,6 +44,7 @@ class Item(models.Model):
     price = models.DecimalField(max_digits=10, decimal_places=2)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    auction_start_time = models.DateTimeField(default=default_auction_start_time)
     auction_end_time = models.DateTimeField(default=default_auction_end_time)
     highest_bid = models.ForeignKey(
         'Bid',
