@@ -13,6 +13,7 @@ staticfiles/
 # Virtualenv
 venv/
 env/
+virtual/
 
 # VS Code
 .vscode/
