@@ -6,30 +6,61 @@ from rest_framework.permissions import IsAuthenticated, AllowAny, IsAuthenticate
 from django.utils import timezone
 from datetime import timedelta
 from rest_framework.exceptions import ValidationError, NotFound
+from .tasks import update_item_status
+from .filters import ItemFilter
 
 class ItemViewSet(viewsets.ModelViewSet):
     serializer_class = ItemSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
-    def get_queryset(self):
-        status = self.request.query_params.get('status')
-        now = timezone.now()
-        thirty_days_ago = now - timedelta(days=30)
+    filterset_class = ItemFilter  
+    queryset = Item.objects.all()
 
-        if status == 'upcoming':
-            return Item.objects.filter(auction_start_time__gt=now)
-        elif status == 'live':
-            return Item.objects.filter(auction_start_time__lte=now, auction_end_time__gt=now)
-        elif status == 'recent':
-            return Item.objects.filter(auction_end_time__lte=now, auction_end_time__gte=thirty_days_ago)
-        elif status == 'past':
-            return Item.objects.filter(auction_end_time__lt=thirty_days_ago)
-        elif status in [None, 'all']:
-            return Item.objects.all()
-        else:
-            raise ValidationError('Invalid status value')
+    search_fields = ['name', 'description']
 
     def perform_create(self, serializer):
-        serializer.save(owner=self.request.user)
+        item = serializer.save(owner=self.request.user)
+
+        now = timezone.now()
+
+        if item.auction_start_time > now:
+            update_item_status.apply_async(
+                args=[item.id, 'live'],
+                eta=item.auction_start_time
+            )
+        else:
+            update_item_status.delay(item.id, 'live')
+
+        if item.auction_end_time > now:
+            update_item_status.apply_async(
+                args=[item.id, 'recently_concluded'],
+                eta=item.auction_end_time
+            )
+        else:
+            update_item_status.delay(item.id, 'recently_concluded')
+
+        update_item_status.apply_async(
+            args=[item.id, 'past'],
+            eta=item.auction_end_time + timedelta(days=30)
+        )
+
+    def perform_update(self, serializer):
+        item = serializer.save()
+        now = timezone.now()
+
+        update_item_status.apply_async(
+            args=[item.id, 'live'],
+            eta=item.auction_start_time if auction_start_time > now else now
+        )
+
+        update_item_status.apply_async(
+            args=[item.id, 'recent'],
+            eta=item.auction_end_time if item.auction_end_time > now else now
+        )
+
+        update_item_status.apply_async(
+            args=[item.id, 'past'],
+            eta=item.auction_end_time + timedelta(days=30)
+        )
 
 class MyItemsListView(generics.ListAPIView):
     serializer_class = ItemSerializer

@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     'api',
     'AN_backend',
+    'django_filters',
 ]
 
 REST_FRAMEWORK = {
@@ -49,7 +50,11 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
-    ]
+    ],
+    'DEFAULT_FILTER_BACKENDS': [
+        'django_filters.rest_framework.DjangoFilterBackend',
+        'rest_framework.filters.SearchFilter'
+    ],
 }
 
 MIDDLEWARE = [
@@ -84,6 +89,8 @@ WSGI_APPLICATION = 'AN_backend.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
+
+CELERY_BROKER_URL = 'redis://localhost:6379/0'
 
 DATABASES = {
     'default': {
@@ -134,3 +141,5 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# celery -A AN_backend worker --loglevel=info to start the celery workers

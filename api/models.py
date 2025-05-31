@@ -46,6 +46,12 @@ class Item(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     auction_start_time = models.DateTimeField(default=default_auction_start_time)
     auction_end_time = models.DateTimeField(default=default_auction_end_time)
+    status = models.CharField(max_length=20, choices=[
+        ('upcoming', 'Upcoming'),
+        ('live', 'Live'),
+        ('recent', 'recent'),
+        ('past', 'Past'),
+    ], default='upcoming')
     highest_bid = models.ForeignKey(
         'Bid',
         on_delete=models.SET_NULL,
