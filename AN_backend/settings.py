@@ -11,9 +11,31 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+from decouple import config, Csv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+import cloudinary
+import cloudinary.uploader
+import cloudinary.api
+
+
+
+
+# Cloudinary configuration
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': config('CLOUDINARY_CLOUD_NAME'),
+    'API_KEY': config('CLOUDINARY_API_KEY'),
+    'API_SECRET': config('CLOUDINARY_API_SECRET'),
+}
+
+cloudinary.config(
+    cloud_name=CLOUDINARY_STORAGE['CLOUD_NAME'],
+    api_key=CLOUDINARY_STORAGE['API_KEY'],
+    api_secret=CLOUDINARY_STORAGE['API_SECRET'],
+    secure=True
+)
 
 
 # Quick-start development settings - unsuitable for production
@@ -26,6 +48,8 @@ SECRET_KEY = 'django-insecure-9nmp^7(qau&rj&+c5g%e+#$ta43tau#8rritrl51omnm7xdbz3
 DEBUG = True
 
 ALLOWED_HOSTS = []
+
+
 
 
 # Application definition
@@ -42,6 +66,8 @@ INSTALLED_APPS = [
     'api',
     'AN_backend',
     'django_filters',
+    'cloudinary',
+    'cloudinary_storage',
 ]
 
 REST_FRAMEWORK = {
@@ -55,6 +81,14 @@ REST_FRAMEWORK = {
         'django_filters.rest_framework.DjangoFilterBackend',
         'rest_framework.filters.SearchFilter'
     ],
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.AnonRateThrottle',   
+        'rest_framework.throttling.UserRateThrottle',   
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'anon': '100/minute',    
+        'user': '1000/hour'
+    }
 }
 
 MIDDLEWARE = [
@@ -99,7 +133,6 @@ DATABASES = {
     }
 }
 
-
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
 
@@ -137,9 +170,12 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
+# Media files configuration
+MEDIA_URL = '/media/'
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
 # celery -A AN_backend worker --loglevel=info to start the celery workers

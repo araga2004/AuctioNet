@@ -3,6 +3,7 @@ from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.utils import timezone
 import datetime
 from .helpers import default_auction_end_time, default_auction_start_time
+from cloudinary.models import CloudinaryField
 
 class CustomUserManager(BaseUserManager):
     def create_user(self, email, username, password=None, **extra_fields):
@@ -46,6 +47,7 @@ class Item(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     auction_start_time = models.DateTimeField(default=default_auction_start_time)
     auction_end_time = models.DateTimeField(default=default_auction_end_time)
+    Image = CloudinaryField('image', blank=True, null=True)
     status = models.CharField(max_length=20, choices=[
         ('upcoming', 'Upcoming'),
         ('live', 'Live'),

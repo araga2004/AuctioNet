@@ -8,13 +8,14 @@ from datetime import timedelta
 from rest_framework.exceptions import ValidationError, NotFound
 from .tasks import update_item_status
 from .filters import ItemFilter
+from rest_framework.parsers import MultiPartParser, FormParser
 
 class ItemViewSet(viewsets.ModelViewSet):
     serializer_class = ItemSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
     filterset_class = ItemFilter  
     queryset = Item.objects.all()
-
+    parser_classes = [MultiPartParser, FormParser]
     search_fields = ['name', 'description']
 
     def perform_create(self, serializer):
